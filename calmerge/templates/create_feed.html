@@ -1,0 +1,12 @@
+
+{% extends "based.html" %}
+
+{% block content %}
+	<h1>Create new feed</h1>
+
+	<form method="POST">
+		<label for="name">Name</label>
+		<input type="text" id="name" name="name" placeholder="My awesome feed" minlength="1" required>
+		<button type="submit">Create feed</button>
+	</form>
+{% endblock %}
