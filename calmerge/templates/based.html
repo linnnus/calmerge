@@ -2,7 +2,8 @@
 <html>
 	<head>
 		<title>{% block title %}{% endblock %} - CalMerge</title>
-		<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+		<link rel="stylesheet" href="{{ url_for('static', filename='styles/based.css') }}">
+		{% block head %}{% endblock %}
 	<head>
 	<body>
 		<header>{% block header %}{% endblock %}</header>

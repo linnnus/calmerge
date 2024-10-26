@@ -13,7 +13,6 @@ def get_db() -> sqlite3.Connection:
     if "db" not in g:
         db = sqlite3.connect(current_app.config["DATABASE"],
                              detect_types=sqlite3.PARSE_DECLTYPES)
-        db.row_factory = sqlite3.Row
 
         # In debugging mode it is often useful to see which queries are executed.
         if current_app.debug or current_app.testing:

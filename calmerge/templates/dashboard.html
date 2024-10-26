@@ -1,7 +1,18 @@
 {% extends "based.html" %}
 
+{% block title %}
+Dashboard
+{% endblock %}
+
 {% block content %}
 	<h1>My feeds</h1>
 
 	<a href="{{ url_for('frontend.create_feed') }}">Create new calendar</a>
+
+	<h2>Your feeds</h2>
+	<ul>
+		{% for feed in feeds %}
+			<li><a href="{{ url_for('frontend.manage_feed', feed_id=feed.id) }}">{{feed.name}}</a></li>
+		{% endfor %}
+	</ul>
 {% endblock %}

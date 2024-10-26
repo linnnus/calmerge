@@ -1,6 +1,8 @@
 DROP TABLE IF EXISTS feed;
 DROP TABLE IF EXISTS source;
-DROP TABLE IF EXISTS source_to_feed;
+DROP TABLE IF EXISTS url_to_content;
+
+-- FIXME: Pluralize names
 
 -- This table stores "feeds" which are calendars composed of multiple sources.
 -- FIXME: Choose timezone? Manually or based on source(s)?
@@ -11,23 +13,27 @@ CREATE TABLE feed (
 );
 
 -- This table will store "primitive sources", i.e. stuff we can subscribe to.
+-- FIXME: Multiple sources can point to the same URL, which is inefficient.
 CREATE TABLE source (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	url TEXT NOT NULL UNIQUE,
-
-	-- When we update sources, their content are stored in this table.
-	-- NULL indicates lack of data in case of failed fetch.
-	last_updated TIMESTAMP,
-	-- FIXME: Is limit size of TEXT too small?
-	content TEXT
+	name TEXT NOT NULL, -- Friendly name for UI.
+	url TEXT NOT NULL UNIQUE,  -- URL pointing to .ical file
+	update_frequency INTEGER, -- Maximum time since last update in seconds.
+	feed_id INTEGER NOT NULL, -- Owning feed (1-to-many relationship)
+	-- Because sources are owned by feeds, they should be removed when the feed is.
+	FOREIGN KEY(feed_id) REFERENCES feed(id) ON DELETE CASCADE,
+	FOREIGN KEY(url) REFERENCES url_to_content(url) ON DELETE CASCADE
 );
 
+-- Stores results of network queries.
+-- FIXME: keep status code, timing, etc.?
+-- (laste_updated, content) = (NULL, NULL) state before initial network request.
+CREATE TABLE url_to_content (
+	-- Requested url – primary key in spirit.
+	url TEXT NOT NULL UNIQUE,
 
--- This table manages the many-to-many relationship between `feed` and `source`.
-CREATE TABLE source_to_feed (
-	source_id INTEGER NOT NULL,
-	feed_id INTEGER NOT NULL,
-	UNIQUE(source_id, feed_id),
-	FOREIGN KEY(source_id) REFERENCES source(id),
-	FOREIGN KEY(feed_id) REFERENCES feed(id) ON DELETE CASCADE
+	last_updated TIMESTAMP,
+
+	-- FIXME: Is limit size of TEXT too small?
+	content TEXT
 );

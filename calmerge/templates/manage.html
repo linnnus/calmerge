@@ -1,5 +1,50 @@
 {% extends "based.html" %}
 
+{% block title %}
+	Manage {{feed.name}}
+{% endblock %}
+
+{% block head %}
+	<link rel="stylesheet" href="{{ url_for('static', filename='styles/manage.css') }}">
+{% endblock %}
+
 {% block content %}
-	<h1>Edit {{ feed_name | safe }}</h1>
+	<h1>Edit {{ feed.name | safe }}</h1>
+
+	<h2>Sources</h2>
+	<table>
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>URL</th>
+				<th>Update frequency</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for source in feed.sources %}
+				<tr>
+					<td>{{ source.name | safe }}</td>
+					<td>{{ source.url | safe }}</td>
+					<td>{{ source.update_frequency }}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h2>Add a new source:</h2>
+	<form method="POST" action="{{ url_for('frontend.add_source', feed_id=feed.id) }}">
+		<div>
+			<label for="name">Source name</label>
+			<input type="text" id="name" name="name" required>
+		</div>
+		<div>
+			<label for="url">URL</label>
+			<input type="url" id="url" name="url" required>
+		</div>
+		<div>
+			<label for="update_frequency">Update frequency (seconds)</label>
+			<input type="number" value="3600" id="update_frequency" name="update_frequency" min="60" required>
+		</div>
+		<button type="submit">Add source</button>
+	</form>
 {% endblock %}
