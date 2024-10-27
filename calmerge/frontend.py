@@ -4,8 +4,11 @@ also `domain.py` which handles most of the business logic.
 """
 
 from flask import Blueprint, request
+from flask.json import jsonify
 from flask.templating import render_template
 from flask.helpers import flash, redirect, url_for
+
+from calmerge.tasks import initial_fetch_source
 from . import domain
 
 bp = Blueprint("frontend", __name__)
@@ -39,17 +42,19 @@ def manage_feed(feed_id: domain.FeedId): # TODO: Handle DomainError here!
 
 @bp.post("/feeds/<int:feed_id>/sources")
 def add_source(feed_id: domain.FeedId):
-    name = request.form["name"]
-    url = request.form["url"]
+    name = request.form["name"].strip()
+    url = request.form["url"].strip()
     update_frequency = int(request.form["update_frequency"])
 
     try:
-        domain.create_source(name, url, update_frequency, owning_feed_id=feed_id)
+        source = domain.create_source(name, url, update_frequency, owning_feed_id=feed_id)
     except domain.DomainError as e:
         # This time we don't use PRG as failing requests are idempotent.
         flash(str(e))
         # FIXME: Kind of stupid to do a DB fetch just for an error message.
         return manage_feed(feed_id)
+
+    initial_fetch_source.delay(source.id) # type: ignore Celery ahh intet virker
 
     # Post/Redirect/Get pattern: https://en.wikipedia.org/wiki/Post/Redirect/Get
     # FIXME: This adds an entry in the history, which we don't want. Fix with JS.

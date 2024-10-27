@@ -22,6 +22,9 @@ FeedId = t.NewType("FeedId", int)
 SourceId = t.NewType("SourceId", int)
 """Newtype representing `source.id` column in database"""
 
+ContentId = t.NewType("ContentId", int)
+"""Newtype representing `url_to_content.id` column in database"""
+
 @dataclass
 class PartialFeed:
     """
@@ -50,11 +53,20 @@ class Source:
     update_frequency: int
     feed_id: FeedId
 
+@dataclass
+class Content:
+    """Represents a static snapshot of a source in the `url_to_content` table."""
+
+    id: ContentId
+    url: str
+    last_updated: t.Optional[datetime]
+    content: t.Optional[str]
+
 def partial_feed_row_factory(cursor: sqlite3.Cursor, row: sqlite3.Row):
     assert cursor.description[0][0] == "id"
     assert cursor.description[1][0] == "name"
     assert cursor.description[2][0] == "created"
-    return PartialFeed(id=row[0],
+    return PartialFeed(id=FeedId(row[0]),
                        name=row[1],
                        created=row[2])
 
@@ -64,7 +76,21 @@ def source_row_factory(cursor: sqlite3.Cursor, row: sqlite3.Row):
     assert cursor.description[2][0] == "url"
     assert cursor.description[3][0] == "update_frequency"
     assert cursor.description[4][0] == "feed_id"
-    return Source(id=row[0], name=row[1], url=row[2], update_frequency=row[3], feed_id=FeedId(row[4]))
+    return Source(id=SourceId(row[0]),
+                  name=row[1],
+                  url=row[2],
+                  update_frequency=row[3],
+                  feed_id=FeedId(row[4]))
+
+def content_row_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> Content:
+    assert cursor.description[0][0] == "id"
+    assert cursor.description[1][0] == "url"
+    assert cursor.description[2][0] == "last_updated"
+    assert cursor.description[3][0] == "content"
+    return Content(id=ContentId(row[0]),
+                   url=row[1],
+                   last_updated=row[2],
+                   content=row[3])
 
 class DomainError(Exception):
     """
@@ -151,3 +177,35 @@ def get_feeds() -> list[PartialFeed]:
     curs = db.execute("""SELECT id, name, created FROM feed;""")
     curs.row_factory = partial_feed_row_factory
     return curs.fetchall()
+
+def get_source_by_id(source_id: SourceId) -> Source:
+    db = get_db()
+    curs = db.execute("""
+        SELECT id, name, url, update_frequency, feed_id FROM source WHERE id = ?;
+    """, [source_id])
+    curs.row_factory = source_row_factory
+    source: t.Optional[Source] = curs.fetchone()
+    if source is None:
+        raise DomainError(f"No source with id {source_id}")
+    return source
+
+def get_content_by_url(url: str) -> Content:
+    db = get_db()
+    curs = db.execute("""
+        SELECT id, url, last_updated, content FROM url_to_content WHERE url = ?;
+    """, [url])
+    curs.row_factory = content_row_factory
+    content: t.Optional[Content] = curs.fetchone()
+    if content is None:
+        raise DomainError(f"No content for URL {url}")
+    return content
+
+def update_content_by_id(content_id: ContentId, *, last_updated: datetime, content: str) -> None:
+    db = get_db()
+    db.execute("""
+        UPDATE url_to_content
+           SET last_updated = ?,
+               content = ?
+         WHERE id = ?;
+    """, [last_updated, content, content_id])
+    db.commit()

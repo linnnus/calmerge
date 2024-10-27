@@ -28,8 +28,11 @@ CREATE TABLE source (
 
 -- Stores results of network queries.
 -- FIXME: keep status code, timing, etc.?
+-- FIXME: goofy ahh name
 -- (laste_updated, content) = (NULL, NULL) state before initial network request.
 CREATE TABLE url_to_content (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+
 	-- Requested url – primary key in spirit.
 	url TEXT NOT NULL UNIQUE,
 
