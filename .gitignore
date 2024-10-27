@@ -17,3 +17,6 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Local notes and stuff
+/local
