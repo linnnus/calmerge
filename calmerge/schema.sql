@@ -21,8 +21,8 @@ CREATE TABLE source (
 	update_frequency INTEGER, -- Maximum time since last update in seconds.
 	feed_id INTEGER NOT NULL, -- Owning feed (1-to-many relationship)
 	-- Because sources are owned by feeds, they should be removed when the feed is.
+	-- FIXME: does the CASCADE goe the right way?
 	FOREIGN KEY(feed_id) REFERENCES feed(id) ON DELETE CASCADE,
-	FOREIGN KEY(url) REFERENCES url_to_content(url) ON DELETE CASCADE
 );
 
 -- Stores results of network queries.
