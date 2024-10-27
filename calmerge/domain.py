@@ -125,25 +125,24 @@ def create_source(name: str, url: str, update_frequency: int, owning_feed_id: Fe
         raise DomainError(f"Update frequency of {update_frequency} is out of range. It should be between 60 (1 minute) and ")
 
     db = get_db()
-    try:
-        with db:
-            db.execute("""
-               INSERT INTO url_to_content (url, last_updated, content) VALUES (?, NULL, NULL);
-            """, [url])
+    with db:
+        # Insert the initial (empty) content in case this is the first time
+        # this source is added. As url content is shared between different
+        # sources with the same url, the content row may already exist in
+        # the DB.
+        db.execute("""
+           INSERT OR IGNORE INTO url_to_content (url, last_updated, content)
+           VALUES (?, NULL, NULL);
+        """, [url])
 
-            curs = db.execute("""
-                INSERT INTO source(name, url, update_frequency, feed_id)
-                VALUES (?, ?, ?, ?)
-                RETURNING id, name, url, update_frequency, feed_id;
-            """, [name, url, update_frequency, owning_feed_id])
-            curs.row_factory = source_row_factory
-            source = curs.fetchone()
-    except db.IntegrityError as e:
-        if e.sqlite_errorcode == sqlite3.SQLITE_CONSTRAINT_UNIQUE and "url_to_content.url" in str(e):
-            raise DomainError("URL already in use as source for this feed") from e
-        else:
-            # Some other integrity error which is an actual bug.
-            raise
+        # Now we can create the source without violating any foreign key constrains.
+        curs = db.execute("""
+            INSERT INTO source(name, url, update_frequency, feed_id)
+            VALUES (?, ?, ?, ?)
+            RETURNING id, name, url, update_frequency, feed_id;
+        """, [name, url, update_frequency, owning_feed_id])
+        curs.row_factory = source_row_factory
+        source = curs.fetchone()
 
     return source
 

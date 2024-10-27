@@ -17,12 +17,13 @@ CREATE TABLE feed (
 CREATE TABLE source (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL, -- Friendly name for UI.
-	url TEXT NOT NULL UNIQUE,  -- URL pointing to .ical file
+	url TEXT NOT NULL,  -- URL pointing to .ical file
 	update_frequency INTEGER, -- Maximum time since last update in seconds.
 	feed_id INTEGER NOT NULL, -- Owning feed (1-to-many relationship)
 	-- Because sources are owned by feeds, they should be removed when the feed is.
 	-- FIXME: does the CASCADE goe the right way?
 	FOREIGN KEY(feed_id) REFERENCES feed(id) ON DELETE CASCADE,
+	FOREIGN KEY(url) REFERENCES url_to_content(url)
 );
 
 -- Stores results of network queries.
