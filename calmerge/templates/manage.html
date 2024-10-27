@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-	<h1>Edit {{ feed.name | safe }}</h1>
+	<h1>Edit {{ feed.name }}</h1>
 
 	<h2>Sources</h2>
 	<table>
@@ -23,8 +23,8 @@
 		<tbody>
 			{% for source in feed.sources %}
 				<tr>
-					<td>{{ source.name | safe }}</td>
-					<td>{{ source.url | safe }}</td>
+					<td>{{ source.name }}</td>
+					<td>{{ source.url }}</td>
 					<td>{{ source.update_frequency }}</td>
 				</tr>
 			{% endfor %}
