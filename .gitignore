@@ -20,3 +20,6 @@ build/
 
 # Local notes and stuff
 /local
+
+# Redis database dump.
+dump.rdb
