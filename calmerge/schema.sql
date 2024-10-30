@@ -9,7 +9,8 @@ DROP TABLE IF EXISTS url_to_content;
 CREATE TABLE feed (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL,
-	created TIMESTAMP NOT NULL -- creation time as an ISO-8601 formatted UTC string
+	created TIMESTAMP NOT NULL, -- creation time as an ISO-8601 formatted UTC string
+	merged_ics TEXT -- The merged ICS of all child sources. NULL until first fetch.
 );
 
 -- This table will store "primitive sources", i.e. stuff we can subscribe to.
@@ -39,5 +40,6 @@ CREATE TABLE url_to_content (
 	last_updated TIMESTAMP,
 
 	-- FIXME: Is limit size of TEXT too small?
+	-- the raw ICS located at `url`.
 	content TEXT
 );

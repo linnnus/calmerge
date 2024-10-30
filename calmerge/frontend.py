@@ -7,6 +7,7 @@ from flask import Blueprint, request
 from flask.json import jsonify
 from flask.templating import render_template
 from flask.helpers import flash, redirect, url_for
+from flask.wrappers import Response
 
 from calmerge.tasks import initial_fetch_source
 from . import domain
@@ -60,3 +61,8 @@ def add_source(feed_id: domain.FeedId):
     # FIXME: This adds an entry in the history, which we don't want. Fix with JS.
     return redirect(location=url_for("frontend.manage_feed", feed_id=feed_id),
                     code=303)
+
+@bp.get("/feeds/<int:feed_id>.ics")
+def get_feed_ics(feed_id: domain.FeedId):
+    feed = domain.get_feed_by_id(feed_id)
+    return Response(feed.merged_ics, mimetype="text/calendar")

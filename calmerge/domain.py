@@ -39,9 +39,11 @@ class PartialFeed:
 
 @dataclass
 class Feed(PartialFeed):
-    """Same as PartialFeed, except includes sources."""
+    """Same as PartialFeed, except includes sources and large attributes."""
 
     sources: list['Source']
+
+    merged_ics: t.Optional[str]
 
 @dataclass
 class Source:
@@ -126,10 +128,12 @@ def get_feed_by_id(feed_id: FeedId) -> Feed:
     db = get_db()
 
     # Fetch feed
-    curs = db.execute("SELECT id, name, created FROM feed WHERE id = ?;", [feed_id])
-    curs.row_factory = partial_feed_row_factory
-    feed: t.Optional[PartialFeed] = curs.fetchone()
-    if feed is None:
+    curs = db.execute("""
+        SELECT id, name, created, merged_ics FROM feed WHERE id = ?;
+    """, [feed_id])
+    curs.row_factory = sqlite3.Row # type: ignore
+    row = curs.fetchone()
+    if row is None:
         raise DomainError(f"No feed with id {feed_id} exists")
 
     # Fetch matching sources
@@ -140,7 +144,11 @@ def get_feed_by_id(feed_id: FeedId) -> Feed:
     sources = curs.fetchall()
 
     # Now we have all the information for a full feed representation
-    return Feed(id=feed.id, name=feed.name, created=feed.created, sources=sources)
+    return Feed(id=row["id"],
+                name=row["name"],
+                created=row["created"],
+                sources=sources,
+                merged_ics=row["merged_ics"])
 
 def create_source(name: str, url: str, update_frequency: int, owning_feed_id: FeedId) -> Source:
     """Adds a new source to the database."""
